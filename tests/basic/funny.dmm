@@ -1,31 +1,21 @@
 hallo
 
 funny test(x y) avo
-    :O__(<Hallo test!>)
-    :O__(x)
-    :O__(y)
+    :O__(x,  y)
 cado
 
 funny add(x y z) avo
     funny innerFunc() avo
-        :O__(<crazy>)
+        :O__(<crazy innerFunc!>)
     cado
     innerFunc()
     wirf x + y + z
 cado
 
-funny cool() avo
-    :O__(<Cool!>)
-cado
-
-test(1 * 10, 2 + 2)
+test(1 * 8 / 2, 2 + 2 - 2)
 
 wenn 16 is add(1, 10, 5) avo
-:O__(<nice>)
+:O__(<nice: 16 is 1 + 10 + 5>)
 cado 
-
-wenn :) avo
-    cool()
-cado
 
 reicht dann auch mal

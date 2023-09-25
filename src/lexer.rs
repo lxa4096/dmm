@@ -60,25 +60,43 @@ pub enum LexerError {
 }
 
 impl Lexer {
+    fn create_keywords() -> HashMap<String, Token> {
+        [
+            ("hallo".to_string(), Token::ReservedKeyword(Keyword::Greeting)),
+            ("reicht dann auch mal".to_string(), Token::ReservedKeyword(Keyword::Farewell)),
+            ("avo".to_string(), Token::ReservedKeyword(Keyword::Avo)),
+            ("semi".to_string(), Token::ReservedKeyword(Keyword::Avo)),
+            ("cado".to_string(), Token::ReservedKeyword(Keyword::Cado)),
+            ("colon".to_string(), Token::ReservedKeyword(Keyword::Cado)),
+            ("funny".to_string(), Token::ReservedKeyword(Keyword::Function)),
+            ("wenn".to_string(), Token::ReservedKeyword(Keyword::If)),
+            ("wirf".to_string(), Token::ReservedKeyword(Keyword::Return)),
+            ("schleif".to_string(), Token::ReservedKeyword(Keyword::Loop)),
+            ("immawida".to_string(), Token::ReservedKeyword(Keyword::Loop)),
+            ("is".to_string(), Token::ReservedKeyword(Keyword::Equals)),
+            ("kleina".to_string(), Token::ReservedKeyword(Keyword::Less)),
+            ("krasser".to_string(), Token::ReservedKeyword(Keyword::Greater)),
+            ("machma".to_string(), Token::ReservedKeyword(Keyword::AssignPrefix)),
+            ("uf".to_string(), Token::ReservedKeyword(Keyword::AssignInfix)),
+            ].iter().cloned().collect()
+    }
+
     pub fn new(text: &str) -> Self {
         Lexer {
             text: text.to_string(), 
             position: 0,
-            reserved_keywords: [
-                ("hallo".to_string(), Token::ReservedKeyword(Keyword::Greeting)),
-                ("reicht dann auch mal".to_string(), Token::ReservedKeyword(Keyword::Farewell)),
-                ("avo".to_string(), Token::ReservedKeyword(Keyword::Avo)),
-                ("cado".to_string(), Token::ReservedKeyword(Keyword::Cado)),
-                ("funny".to_string(), Token::ReservedKeyword(Keyword::Function)),
-                ("wenn".to_string(), Token::ReservedKeyword(Keyword::If)),
-                ("wirf".to_string(), Token::ReservedKeyword(Keyword::Return)),
-                ("schleif".to_string(), Token::ReservedKeyword(Keyword::Loop)),
-                ("is".to_string(), Token::ReservedKeyword(Keyword::Equals)),
-                ("kleina".to_string(), Token::ReservedKeyword(Keyword::Less)),
-                ("krasser".to_string(), Token::ReservedKeyword(Keyword::Greater)),
-                ("machma".to_string(), Token::ReservedKeyword(Keyword::AssignPrefix)),
-                ("uf".to_string(), Token::ReservedKeyword(Keyword::AssignInfix)),
-                ].iter().cloned().collect()
+            reserved_keywords: Lexer::create_keywords()
+        }
+    }
+
+    pub fn new_fill_greeting_farewell(text: &str) -> Self {
+        let mut adapted_text = String::from("hallo\n x = ");
+        adapted_text.push_str(text);
+        adapted_text.push_str("\nreicht dann auch mal");
+        Lexer {
+            text: adapted_text, 
+            position: 0,
+            reserved_keywords: Lexer::create_keywords()
         }
     }
 
@@ -163,11 +181,12 @@ impl Lexer {
                 break;
             }
         }
+        // Reset to text beginning, if no keyword matched
         result = result.get(0..1).unwrap().to_string();
         self.position = start_position;
-        // Variable. TODO: Cut of on first space.
+        // Variable. 
         while let Some(next_char) = &mut self.peek() {
-            if next_char.is_alphanumeric() || *next_char == '_' {
+            if next_char.is_alphanumeric() || *next_char == '_' || *next_char == ';' {
                 result.push(*next_char);
                 self.goto_next_position();
             } else {

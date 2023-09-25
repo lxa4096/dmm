@@ -11,6 +11,10 @@ funny potenz(x y) avo
     wirf r
 cado
 
-:O__(potenz(2, 8))
+i = 0
+schleif i kleina 16 avo
+    :O__(potenz(2, i))
+    i = i + 1
+cado
 
 reicht dann auch mal

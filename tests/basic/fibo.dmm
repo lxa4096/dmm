@@ -1,19 +1,21 @@
 hallo
 
-funny fib(n) avo
+funny fib(n) semi
     is n is 0 avo wirf 0 cado
     is n is 1 avo wirf 1 cado
     wirf fib(n - 2) + fib(n - 1)
-cado
+colon
 
-:O__(<Die ersten 30 Fibo Zahlen!>)
+n = d;D(<Wie viele Fibozahlen willst du denn>)
+
+:O__(<Die ersten >, n, < Fibo Zahlen!>)
 :O__(<Besser mit dem optimiert kompilierten Interpreter.>)
 
 machma i uf 0
-schleif i kleina 30 avo
+immawida i kleina n avo
     :O__(fib(i))
     machma i uf i + 1
-cado
+colon
 
 
 reicht dann auch mal

@@ -1,5 +1,6 @@
 use crate::lexer::{Lexer, LexerError, Token, Keyword};
 use std::fmt::Display;
+use std::rc::Rc;
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub enum Value {
@@ -39,48 +40,48 @@ impl Display for Value {
 #[derive(PartialEq, Clone, Debug)]
 pub enum ASTNode {
     UnaryOp {
-        expression: Box<ASTNode>,
+        expression: Rc<ASTNode>,
         token: Token
     },
     BinOp {
-        left: Box<ASTNode>,
-        right: Box<ASTNode>,
+        left: Rc<ASTNode>,
+        right: Rc<ASTNode>,
         token: Token
     },
     Value {
         value: Value
     },
     FunctionCall {
-        function: Box<ASTNode>,
+        function: Rc<ASTNode>,
         parameters: Vec<ASTNode>
     },
     FunctionDeclaration {
         name: String,
         parameters: Vec<String>,
-        execution_block: Box<ASTNode>
+        execution_block: Rc<ASTNode>
     },
     If {
-        condition: Box<ASTNode>,
-        execution: Box<ASTNode>
+        condition: Rc<ASTNode>,
+        execution: Rc<ASTNode>
     },
     Loop {
-        condition: Box<ASTNode>,
-        execution: Box<ASTNode>
+        condition: Rc<ASTNode>,
+        execution: Rc<ASTNode>
     },
     Compare {
-        left: Box<ASTNode>,
-        right: Box<ASTNode>,
+        left: Rc<ASTNode>,
+        right: Rc<ASTNode>,
         compare_type: CompareType
     },
     Block {
         children: Vec<ASTNode>
     },
     Assign {
-        left: Box<ASTNode>,
-        right: Box<ASTNode>
+        left: Rc<ASTNode>,
+        right: Rc<ASTNode>
     },
     Return {
-        expression: Box<ASTNode>,
+        expression: Rc<ASTNode>,
     },
     Variable {
         name: String
@@ -135,7 +136,7 @@ impl Parser {
             let unary_token = self.current_token.clone();
             self.consume_token()?;
             let node = ASTNode::UnaryOp {
-                expression: Box::new(self.expr()?),
+                expression: Rc::new(self.factor()?),
                 token: unary_token
             };
             return Ok(node)
@@ -176,8 +177,8 @@ impl Parser {
             let operator_token = self.current_token.clone();
             self.consume_token()?;
             node = ASTNode::BinOp {
-                left: Box::new(node), 
-                right: Box::new(self.factor()?),
+                left: Rc::new(node), 
+                right: Rc::new(self.factor()?),
                 token: operator_token
             };
         }
@@ -196,8 +197,8 @@ impl Parser {
             };
             self.consume_token()?;
             node = ASTNode::Compare {
-                left: Box::new(node), 
-                right: Box::new(self.factor()?),
+                left: Rc::new(node), 
+                right: Rc::new(self.factor()?),
                 compare_type
             };
         }
@@ -212,8 +213,8 @@ impl Parser {
             let operator_token = self.current_token.clone();
             self.consume_token()?;
             node = ASTNode::BinOp {
-                left: Box::new(node),
-                right: Box::new(self.term()?),
+                left: Rc::new(node),
+                right: Rc::new(self.term()?),
                 token: operator_token
             };
         }
@@ -248,8 +249,8 @@ impl Parser {
         self.consume(Token::Assign)?;
         let right = self.expr()?;
         Ok(ASTNode::Assign {
-            left: Box::new(left),
-            right: Box::new(right)
+            left: Rc::new(left),
+            right: Rc::new(right)
         })
     }
 
@@ -271,7 +272,7 @@ impl Parser {
         self.consume(Token::ParentheseClose)?;
         Ok(
             ASTNode::FunctionCall {
-                function: Box::new(function),
+                function: Rc::new(function),
                 parameters
             }
         )
@@ -294,8 +295,8 @@ impl Parser {
                     Keyword::If | Keyword::Equals => {
                         self.consume_token()?;
                         ASTNode::If {
-                            condition: Box::new(self.expr()?),
-                            execution: Box::new(self.inner_block_statement()?)
+                            condition: Rc::new(self.expr()?),
+                            execution: Rc::new(self.inner_block_statement()?)
                         }
                     },
                     Keyword::Function => {
@@ -319,14 +320,14 @@ impl Parser {
                         ASTNode::FunctionDeclaration {
                             name: func_name.clone(),
                             parameters,
-                            execution_block: Box::new(self.inner_block_statement()?)
+                            execution_block: Rc::new(self.inner_block_statement()?)
                         }
                     },
                     Keyword::Loop => {
                         self.consume_token()?;
                         ASTNode::Loop {
-                            condition: Box::new(self.expr()?),
-                            execution: Box::new(self.inner_block_statement()?)
+                            condition: Rc::new(self.expr()?),
+                            execution: Rc::new(self.inner_block_statement()?)
                         }
                     },
                     Keyword::AssignPrefix => {
@@ -335,14 +336,14 @@ impl Parser {
                         self.consume(Token::ReservedKeyword(Keyword::AssignInfix))?;
                         let right = self.expr()?;
                         ASTNode::Assign {
-                            left: Box::new(left),
-                            right: Box::new(right)
+                            left: Rc::new(left),
+                            right: Rc::new(right)
                         }
                     },
                     Keyword::Return => {
                         self.consume_token()?;
                         ASTNode::Return {
-                            expression: Box::new(self.expr()?)
+                            expression: Rc::new(self.expr()?)
                         }
                     },
                     _ => {self.empty()}

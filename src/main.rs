@@ -39,7 +39,7 @@ fn print_ast(text: String) {
 fn interpret_text(text: String) {
     let lexer = Lexer::new(&text);
     let parser = Parser::new(lexer);
-    let mut interpreter = Interpreter::new(parser);
+    let mut interpreter = Interpreter::new(parser, std::env::var("USE_HUMANOIDS").is_err());
 
     match interpreter.interpret() {
         Ok(()) => {},

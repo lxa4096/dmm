@@ -6,7 +6,7 @@ cado
 
 machma x uf 5
 
-z = add(x - 1, 1)
+z = add(-1 + x, 1)
 is z is x avo
     :O__(:))
 cado

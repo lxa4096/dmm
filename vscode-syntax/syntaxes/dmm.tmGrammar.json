@@ -46,7 +46,7 @@
         ]
       },
       "constant": {
-        "match": "\\b(?::)|:()\\b",
+        "match": "\\b(?::\\)|:\\()\\b",
         "name": "constant.language.dmm"
       },
       "paren-expression": {
