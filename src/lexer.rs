@@ -17,6 +17,7 @@ pub enum Token {
     ID{string: String},
     Integer(u32),
     String(String),
+    Boolean(bool),
     Comma,
     Plus,
     Minus,
@@ -148,6 +149,27 @@ impl Lexer {
         }
     }
 
+    fn smiley(&mut self) -> Option<Token> {
+        match &self.peek() {
+            Some(current_char) => {
+                match current_char {
+                    ')' => {
+                        self.goto_next_position();
+                        Some(Token::Boolean(true))
+                    },
+                    '(' => {
+                        self.goto_next_position();
+                        Some(Token::Boolean(false))
+                    },
+                    _ => {None}
+                }
+            },
+            None => {
+                None
+            }
+        }
+    }
+
     // Break text into token.
     pub fn get_next_token(&mut self) -> Result<Token, LexerError> {
         if self.position > self.text.len() - 1 {
@@ -179,7 +201,10 @@ impl Lexer {
                 token = Some(Token::EndLine);
             } else if current_char == ',' {
                 token = Some(Token::Comma);
-            } else {
+            } else if current_char == ':' {
+                token = self.smiley();  
+            } 
+            if token == None {
                 token = Some(self.keyword_or_string()?);
             }
         }

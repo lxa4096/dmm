@@ -5,6 +5,7 @@ use std::fmt::Display;
 pub enum Value {
     Integer(i32),
     String(String),
+    Boolean(bool),
     None
 }
 
@@ -16,6 +17,9 @@ impl Display for Value {
             },
             Value::String(string) => {
                 write!(formatter, "{}", string)
+            },
+            Value::Boolean(b) => {
+                write!(formatter, "{}", if *b { ":)" } else { ":("} )
             },
             Value::None => {
                 write!(formatter, "-")
@@ -91,7 +95,7 @@ impl Parser {
     }
 
     fn factor(&mut self) -> Result<ASTNode, LexerError> {
-        // FACTOR := +|- FACTOR | integer | (EXPR)
+        // FACTOR := +|- FACTOR | integer | (EXPR) | string | boolean | VARIABLE
         if Token::Plus == self.current_token || Token::Minus == self.current_token {
             let unary_token = self.current_token.clone();
             self.consume_token()?;
@@ -116,6 +120,12 @@ impl Parser {
         }  else if let Token::String(string) = &self.current_token {
             let node = ASTNode::Value {
                 value: Value::String(string.clone())
+            };
+            self.consume_token()?;
+            Ok(node)
+        } else if let Token::Boolean(b) = &self.current_token {
+            let node = ASTNode::Value {
+                value: Value::Boolean(*b)
             };
             self.consume_token()?;
             Ok(node)
