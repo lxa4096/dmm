@@ -7,7 +7,15 @@ pub enum Keyword {
     Farewell,
     Avo,
     Cado,
-    Function
+    Function,
+    Return,
+    Loop,
+    Equals,
+    Less,
+    Greater,
+    AssignPrefix,
+    AssignInfix,
+    If
 }
 
 
@@ -62,6 +70,14 @@ impl Lexer {
                 ("avo".to_string(), Token::ReservedKeyword(Keyword::Avo)),
                 ("cado".to_string(), Token::ReservedKeyword(Keyword::Cado)),
                 ("funny".to_string(), Token::ReservedKeyword(Keyword::Function)),
+                ("wenn".to_string(), Token::ReservedKeyword(Keyword::If)),
+                ("wirf".to_string(), Token::ReservedKeyword(Keyword::Return)),
+                ("schleif".to_string(), Token::ReservedKeyword(Keyword::Loop)),
+                ("is".to_string(), Token::ReservedKeyword(Keyword::Equals)),
+                ("kleina".to_string(), Token::ReservedKeyword(Keyword::Less)),
+                ("krasser".to_string(), Token::ReservedKeyword(Keyword::Greater)),
+                ("machma".to_string(), Token::ReservedKeyword(Keyword::AssignPrefix)),
+                ("uf".to_string(), Token::ReservedKeyword(Keyword::AssignInfix)),
                 ].iter().cloned().collect()
         }
     }
@@ -106,6 +122,8 @@ impl Lexer {
     fn keyword_or_string(&mut self) -> Result<Token, LexerError> {
         let mut result = String::new();
         let current_char = self.current_char().unwrap();
+
+        // String
         if current_char == '<' {
             while let Some(next_char) = self.peek() {
                 if next_char != '>' {
@@ -127,26 +145,39 @@ impl Lexer {
             }
         }
         result.push(current_char);
-        while let Some(next_char) = self.peek() {
-            if next_char.is_alphanumeric() || next_char == ' ' || next_char == '_' {
-                result.push(next_char);
+        let start_position = self.position;
+        // Keywords  
+        while let Some(next_char) = &mut self.peek() {
+            if next_char.is_alphanumeric() || *next_char == ' ' || *next_char == '_' {
+                result.push(*next_char);
+                self.goto_next_position();
+
+                match self.reserved_keywords.get(&result) {
+                    Some(keyword_token) => {
+                        // self.position = self.position + 1;
+                        return Ok(keyword_token.clone().clone())
+                    }
+                    _ => {}
+                }
+            } else {
+                break;
+            }
+        }
+        result = result.get(0..1).unwrap().to_string();
+        self.position = start_position;
+        // Variable. TODO: Cut of on first space.
+        while let Some(next_char) = &mut self.peek() {
+            if next_char.is_alphanumeric() || *next_char == '_' {
+                result.push(*next_char);
                 self.goto_next_position();
             } else {
                 break;
             }
         }
-        if let Some(keyword_token) = self.reserved_keywords.get(&result) {
-            Ok(keyword_token.clone())
-        } else {
-            if let Some(i) = result.find(" ") {
-                if result.get(i..result.len()).unwrap().replace(' ', "").len() > 0 {
-                    return Err(LexerError::InvalidSyntax("Variable with spaces between!".to_string()));
-                }
-            }
-            Ok(Token::ID {
-                string: result.replace(' ', "")
-            })
-        }
+        Ok(Token::ID {
+            string: result
+        })
+        
     }
 
     fn smiley(&mut self) -> Option<Token> {
@@ -204,6 +235,7 @@ impl Lexer {
             } else if current_char == ':' {
                 token = self.smiley();  
             } 
+
             if token == None {
                 token = Some(self.keyword_or_string()?);
             }

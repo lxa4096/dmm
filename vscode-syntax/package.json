@@ -1,0 +1,39 @@
+{
+	"name": "dmm-language",
+	"description": "Minimal D-- Language support for VS Code",
+	"version": "0.0.1",
+	"publisher": "cursedDev",
+  "repository": "https://github.com/Microsoft/vscode-extension-samples/helloworld-sample",
+	"engines": {
+		"vscode": "^1.34.0"
+	},
+  "categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onLanguage:dmm"
+	],
+	"main": "./main.js",
+	"contributes": {
+        "languages": [
+          {
+            "id": "dmm",
+            "extensions": [".dmm"]
+          }
+        ],
+        "grammars": [
+          {
+            "language": "dmm",
+            "scopeName": "source.dmm",
+            "path": "./syntaxes/dmm.tmGrammar.json"
+          }
+        ]
+      },
+      "scripts": {
+
+      },
+      "devDependencies": {
+        "@types/node": "^16.11.7",
+        "@types/vscode": "^1.34.0"
+      }
+}

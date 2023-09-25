@@ -1,12 +1,19 @@
 use crate::lexer::{Lexer, LexerError, Token, Keyword};
 use std::fmt::Display;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub enum Value {
     Integer(i32),
     String(String),
     Boolean(bool),
     None
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum CompareType {
+    Equals,
+    Less,
+    Greater
 }
 
 impl Display for Value {
@@ -29,7 +36,7 @@ impl Display for Value {
 }
 
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub enum ASTNode {
     UnaryOp {
         expression: Box<ASTNode>,
@@ -47,17 +54,36 @@ pub enum ASTNode {
         function: Box<ASTNode>,
         parameters: Vec<ASTNode>
     },
+    FunctionDeclaration {
+        name: String,
+        parameters: Vec<String>,
+        execution_block: Box<ASTNode>
+    },
+    If {
+        condition: Box<ASTNode>,
+        execution: Box<ASTNode>
+    },
+    Loop {
+        condition: Box<ASTNode>,
+        execution: Box<ASTNode>
+    },
+    Compare {
+        left: Box<ASTNode>,
+        right: Box<ASTNode>,
+        compare_type: CompareType
+    },
     Block {
         children: Vec<ASTNode>
     },
     Assign {
         left: Box<ASTNode>,
-        right: Box<ASTNode>,
-        token: Token
+        right: Box<ASTNode>
+    },
+    Return {
+        expression: Box<ASTNode>,
     },
     Variable {
-        name: String,
-        token: Token
+        name: String
     },
     NoOp
 }
@@ -91,6 +117,15 @@ impl Parser {
                 found: self.current_token.clone(),
                 expected: token.to_string()
             })
+        }
+    }
+
+    fn function_call_or_variable(&mut self) -> Result<ASTNode, LexerError> {
+        let variable = self.variable()?;
+        if self.current_token == Token::ParentheseOpen {
+            Ok(self.functioncall_statement(variable)?)
+        } else {
+            Ok(variable)
         }
     }
 
@@ -130,7 +165,7 @@ impl Parser {
             self.consume_token()?;
             Ok(node)
         } else {
-            Ok(self.variable()?)
+            Ok(self.function_call_or_variable()?)
         }
     } 
 
@@ -144,6 +179,26 @@ impl Parser {
                 left: Box::new(node), 
                 right: Box::new(self.factor()?),
                 token: operator_token
+            };
+        }
+        while let Token::ReservedKeyword(keyword) = self.current_token  { 
+            let compare_type = match keyword {
+                Keyword::Equals => {
+                    CompareType::Equals
+                },
+                Keyword::Less => {
+                    CompareType::Less
+                },
+                Keyword::Greater => {
+                    CompareType::Greater
+                },
+                _ => {break;}
+            };
+            self.consume_token()?;
+            node = ASTNode::Compare {
+                left: Box::new(node), 
+                right: Box::new(self.factor()?),
+                compare_type
             };
         }
         Ok(node)
@@ -171,13 +226,13 @@ impl Parser {
     }
 
     fn variable(&mut self) -> Result<ASTNode, LexerError> {
-        match &self.current_token {
+        match self.current_token.clone() {
             Token::ID{string} => {
-                let node = ASTNode::Variable {
-                    name: string.clone(),
-                    token: self.current_token.clone()
-                };
                 self.consume_token()?;
+                let node = ASTNode::Variable {
+                    name: string.clone()
+                };
+                
                 Ok(node)
             },
             _ => {
@@ -194,19 +249,30 @@ impl Parser {
         let right = self.expr()?;
         Ok(ASTNode::Assign {
             left: Box::new(left),
-            token: Token::Assign,
             right: Box::new(right)
         })
     }
 
     fn functioncall_statement(&mut self, function: ASTNode) -> Result<ASTNode, LexerError> {
         self.consume(Token::ParentheseOpen)?;
-        let parameter = self.variable().or_else(|_| self.expr())?;
+        let mut parameters : Vec<ASTNode> = Vec::new();
+        // Check if parameters exist.
+        if self.current_token != Token::ParentheseClose {
+            loop {
+                let parameter = self.expr()?;
+                parameters.push(parameter);
+                if self.current_token != Token::Comma {
+                    break;
+                } else {
+                    self.consume(Token::Comma)?;
+                }
+            }
+        }
         self.consume(Token::ParentheseClose)?;
         Ok(
             ASTNode::FunctionCall {
                 function: Box::new(function),
-                parameters: vec![parameter]
+                parameters
             }
         )
     }
@@ -222,7 +288,66 @@ impl Parser {
                 } else {
                     self.empty()
                 }
-            }
+            },
+            Token::ReservedKeyword(keyword) => {
+                match keyword {
+                    Keyword::If | Keyword::Equals => {
+                        self.consume_token()?;
+                        ASTNode::If {
+                            condition: Box::new(self.expr()?),
+                            execution: Box::new(self.inner_block_statement()?)
+                        }
+                    },
+                    Keyword::Function => {
+                        self.consume_token()?;
+                        let func_name = match &self.current_token {
+                            Token::ID {string} => {
+                                string.clone()
+                            },
+                            _ => {return Err(LexerError::UnexpectedToken{expected: "ID for FunctionName".to_string(), found: self.current_token.clone()});}
+                        };
+                        self.consume_token()?;
+                        self.consume(Token::ParentheseOpen)?;
+                        let mut parameters: Vec<String> = Vec::new();
+                        if self.current_token != Token::ParentheseClose {
+                            while let Token::ID{string} = self.current_token.clone() {
+                                self.consume_token()?;
+                                parameters.push(string.clone());
+                            } 
+                        }
+                        self.consume(Token::ParentheseClose)?;
+                        ASTNode::FunctionDeclaration {
+                            name: func_name.clone(),
+                            parameters,
+                            execution_block: Box::new(self.inner_block_statement()?)
+                        }
+                    },
+                    Keyword::Loop => {
+                        self.consume_token()?;
+                        ASTNode::Loop {
+                            condition: Box::new(self.expr()?),
+                            execution: Box::new(self.inner_block_statement()?)
+                        }
+                    },
+                    Keyword::AssignPrefix => {
+                        self.consume_token()?;
+                        let left = self.variable()?;
+                        self.consume(Token::ReservedKeyword(Keyword::AssignInfix))?;
+                        let right = self.expr()?;
+                        ASTNode::Assign {
+                            left: Box::new(left),
+                            right: Box::new(right)
+                        }
+                    },
+                    Keyword::Return => {
+                        self.consume_token()?;
+                        ASTNode::Return {
+                            expression: Box::new(self.expr()?)
+                        }
+                    },
+                    _ => {self.empty()}
+                }
+            },
             _ => {self.empty()}
         }) 
     }
@@ -232,10 +357,27 @@ impl Parser {
         let mut nodes : Vec<ASTNode> = vec![node];
         while self.current_token == Token::EndLine {
             self.consume(Token::EndLine)?;
-            nodes.push(self.statement()?);
+            let statement = self.statement()?;
+            if statement != ASTNode::NoOp {
+                nodes.push(statement);
+            }
         }
 
         return Ok(nodes);
+    }
+
+    fn inner_block_statement(&mut self) -> Result<ASTNode, LexerError>{
+        if self.current_token == Token::EndLine {
+            self.consume_token()?;
+        }
+        self.consume(Token::ReservedKeyword(Keyword::Avo))?;
+        let nodes = self.statement_list()?;
+        self.consume(Token::ReservedKeyword(Keyword::Cado))?;
+
+        let block_node = ASTNode::Block {
+            children: nodes
+        };
+        Ok(block_node)
     }
 
     fn block_statement(&mut self) -> Result<ASTNode, LexerError>{

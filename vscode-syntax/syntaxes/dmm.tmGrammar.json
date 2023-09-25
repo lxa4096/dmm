@@ -1,0 +1,64 @@
+{
+    "scopeName": "source.dmm",
+    "patterns": [
+      { "include": "#main" },
+      { "include": "#constant" },
+      { "include": "#control" },
+      { "include": "#expression" },
+
+      { "include": "#paren-expression" }
+    ],
+    "tokenColors": [{
+      "scope": "greeting",
+      "settings": [{"foreground": "#FF0000"}]
+    }],
+    "repository": {
+      "expression": {
+        "patterns": [{ "include": "#letter" }, { "include": "#paren-expression" }]
+      },
+      "main": {
+        "match": "(hallo|reicht dann auch mal)",
+        "name": "keyword.control.dmm",
+        "captures": {
+          "1": {
+            "name": "storage.modifier.linkage.jakt"
+          },
+          "2": {
+            "name": "keyword.type.struct.jakt"
+          }
+        }
+      },
+      "control": {
+        "patterns": [
+          {
+            "name": "meta.control.jakt",
+            "match": "\\b(is|wenn|schleife)(?=.*?(?:\\avo|$))",
+            "captures": {
+              "1": {
+                "name": "keyword.control.block.dmm"
+              }
+            }
+          },
+          {
+            "name": "keyword.control.dmm",
+            "match": "\\b(wirf)\\b"
+          }
+        ]
+      },
+      "constant": {
+        "match": "\\b(?::)|:()\\b",
+        "name": "constant.language.dmm"
+      },
+      "paren-expression": {
+        "begin": "avo",
+        "end": "cado",
+        "beginCaptures": {
+          "0": { "name": "punctuation.begin.bracket.dmm" }
+        },
+        "endCaptures": {
+          "0": { "name": "punctuation.end.bracket.dmm" }
+        },
+        "name": "punctuation.period.dmm"
+      }
+    }
+  }

@@ -1,0 +1,16 @@
+hallo
+
+funny potenz(x y) avo
+    machma i uf 0
+    r = 1
+    schleif i kleina y avo
+        r = r * x
+        machma i uf i + 1
+    cado
+    
+    wirf r
+cado
+
+:O__(potenz(2, 8))
+
+reicht dann auch mal

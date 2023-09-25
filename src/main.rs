@@ -1,6 +1,7 @@
 mod lexer;
 mod parser;
 mod interpreter;
+mod humanoid;
 
 use lexer::{Lexer, Token, LexerError};
 use parser::Parser;
@@ -12,10 +13,19 @@ use std::env;
 
 fn print_tokens(text: String) {
     let mut lexer = Lexer::new(&text);
-    while let Ok(token) = lexer.get_next_token() {
-        println!("{}", token);
-        if token == Token::EOF {
-            break;
+    loop {
+        let token_result = lexer.get_next_token();
+        match token_result {
+            Ok(token) => {
+                println!("{}", token);
+                if token == Token::EOF {
+                    break;
+                }
+            },
+            Err(e) => {
+                println!("{:?}", e);
+                break;
+            }
         }
     }
 }
@@ -57,6 +67,7 @@ fn repl() {
         }    
     }
 }
+
 
 fn main() -> Result<(), LexerError>{
     if env::args().len() > 1 {

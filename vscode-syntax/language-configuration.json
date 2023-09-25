@@ -1,0 +1,26 @@
+{
+    "comments": {
+      "lineComment": "//"
+    },
+    "brackets": [
+      ["avo", "cado"],
+      ["hallo", "reicht dann auch mal"],
+      ["[", "]"],
+      ["(", ")"],
+      ["<", ">"]
+    ],
+    "autoClosingPairs": [
+      ["hallo", "reicht dann auch mal"],
+      ["avo", "cado"],
+      ["[", "]"],
+      ["(", ")"],
+      ["<", ">"]
+    ],
+    "surroundingPairs": [
+    ["hallo", "reicht dann auch mal"],
+    ["avo", "cado"],
+    ["[", "]"],
+    ["(", ")"],
+    ["<", ">"]
+    ]
+  }
