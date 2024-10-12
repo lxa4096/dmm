@@ -1,5 +1,4 @@
 # D--
-The worse than D-tier language with cringe german slang keywords.
 
 Do you want to print something? Call `:O__(<Hello world!>)`!
 
